@@ -2,11 +2,6 @@ name: SSH Debug Session
 
 on:
   workflow_dispatch:
-    inputs:
-      message:
-        description: "Session note (optional - e.g. what you plan to do)"
-        required: false
-        default: "General debug session"
 
 jobs:
   ssh-session:
