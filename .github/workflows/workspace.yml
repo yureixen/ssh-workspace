@@ -2,6 +2,11 @@ name: SSH Debug Session
 
 on:
   workflow_dispatch:
+    inputs:
+      message:
+        description: "Session note (optional)"
+        required: false
+        default: "General debug session"
 
 jobs:
   ssh-session:
@@ -18,39 +23,12 @@ jobs:
           echo "  Note    : ${{ github.event.inputs.message }}"
           echo "  Started : $(date)"
           echo "  Timeout : 6 hours"
-          echo "  Runner  : ubuntu-latest"
           echo "  CPU     : $(nproc) cores"
           echo "  RAM     : $(free -h | awk '/^Mem:/{print $2}')"
           echo "  Storage : $(df -h / | awk 'NR==2{print $4}') free"
           echo "=================================="
 
-      - name: Install tmate
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y tmate
-
-      - name: Start SSH Session
-        run: |
-          tmate -S /tmp/tmate.sock new-session -d
-          tmate -S /tmp/tmate.sock wait tmate-ready
-
-          echo ""
-          echo "=================================="
-          echo "  CONNECT USING ONE OF THESE:"
-          echo "=================================="
-          echo ""
-          echo "  SSH Command:"
-          tmate -S /tmp/tmate.sock display -p '  #{tmate_ssh}'
-          echo ""
-          echo "  Web URL:"
-          tmate -S /tmp/tmate.sock display -p '  #{tmate_web}'
-          echo ""
-          echo "  (Session will stay open for up to 6 hours)"
-          echo "=================================="
-
-          # Keep session alive
-          while true; do
-            sleep 30
-            # Exit if tmate session is dead
-            tmate -S /tmp/tmate.sock display -p '' 2>/dev/null || break
-          done
+      - name: Start SSH Session via Cloudflare Tunnel
+        uses: valeriangalliat/action-sshd-cloudflared@v4
+        env:
+          AUTHORIZED_KEYS: ${{ secrets.SSH_PUBLIC_KEY }}
